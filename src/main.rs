@@ -1,50 +1,48 @@
+// work in progress
+// TODO: autorun, support of other buttons, maybe support of other OS
+
+
 #![allow(unused)]
 
-use tray_icon::{Icon, TrayIconBuilder, TrayIconEvent, menu::{Menu, MenuEvent, MenuItem}};
+use tray_icon::{Icon, TrayIcon, TrayIconBuilder, TrayIconEvent, menu::{Menu, MenuEvent, MenuId, MenuItem}};
 use std::env;
 use image;
-use winit::{application::ApplicationHandler, event_loop::{self, ActiveEventLoop, ControlFlow, EventLoop, EventLoopBuilder}, platform::windows::EventLoopBuilderExtWindows};
+use winit::{application::ApplicationHandler, event, event_loop::{self, ActiveEventLoop, ControlFlow, EventLoop, EventLoopBuilder}, platform::windows::EventLoopBuilderExtWindows};
 use winit::event::WindowEvent;
 use winit::window::{Window, WindowId};
 
 #[derive(Default)]
 struct App {
-    window: Option<Window>
+    tray_icon: Option<TrayIcon>,
 }
 
+#[derive(Debug)]
 enum UserEvent {
     TrayIconEvent(tray_icon::TrayIconEvent),
     MenuEvent(tray_icon::menu::MenuEvent),
 }
 
-impl ApplicationHandler for App {
-    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        self.window = Some(event_loop.create_window(Window::default_attributes()).unwrap());
-    }
+impl ApplicationHandler<UserEvent> for App {
+    fn resumed(&mut self, _event_loop: &ActiveEventLoop) {}
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
+    fn window_event(&mut self, _event_loop: &ActiveEventLoop, _id: WindowId, _event: WindowEvent) {}
+
+    fn user_event(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop, event: UserEvent) {
+        println!("{event:?}");
         match event {
-            WindowEvent::CloseRequested => {
-                println!("The close button was pressed; stopping");
-                event_loop.exit();
+            UserEvent::MenuEvent(event) => {
+                if event.id == MenuId::new("1002") {
+                    std::process::exit(0);
+                }else if event.id == MenuId::new("1001") {
+                    std::process::Command::new("Explorer.exe")
+                        .arg("shell:RecycleBinFolder")
+                        .status()
+                        .expect("Failed to open Windows Explorer at path");
+                }else if event.id == MenuId::new("1000") {
+                    
+                }
             },
-            WindowEvent::RedrawRequested => {
-                // Redraw the application.
-                //
-                // It's preferable for applications that do not render continuously to render in
-                // this event rather than in AboutToWait, since rendering in here allows
-                // the program to gracefully handle redraws requested by the OS.
-
-                // Draw.
-
-                // Queue a RedrawRequested event.
-                //
-                // You only need to call this if you've determined that you need to redraw in
-                // applications which do not always need to. Applications that redraw continuously
-                // can render here instead.
-                self.window.as_ref().unwrap().request_redraw();
-            },
-            _ => (),
+            UserEvent::TrayIconEvent(tray_icon_event) => (),
         }
     }
 }
@@ -60,7 +58,7 @@ fn main() {
 
     let icon = load_icon(&path);
 
-     let tray_menu = Menu::with_items(&[
+    let tray_menu = Menu::with_items(&[
             &MenuItem::new("reset", true, None),
             &MenuItem::new("open dustbin", true, None),
 
@@ -71,7 +69,7 @@ fn main() {
 
     let tray_icon = TrayIconBuilder::new().with_menu(Box::new(tray_menu)).with_icon(icon).with_tooltip("dustbin").build().unwrap();
 
-    let event_loop = EventLoop::builder().with_any_thread(true).build().unwrap();
+    let event_loop = EventLoop::<UserEvent>::with_user_event().build().unwrap();
 
     event_loop.set_control_flow(ControlFlow::Wait);
 
@@ -79,12 +77,18 @@ fn main() {
     let tray_channel = TrayIconEvent::receiver();
 
     let mut app = App::default();
-    event_loop.run_app(&mut app).unwrap();
 
     let proxy = event_loop.create_proxy();
-    tray_icon::menu::MenuEvent::set_event_handler(Some(move |event| {
+    TrayIconEvent::set_event_handler(Some(move |event| {
+        proxy.send_event(UserEvent::TrayIconEvent(event));
+    }));
+    
+    let proxy = event_loop.create_proxy();
+    MenuEvent::set_event_handler(Some(move |event| {
         proxy.send_event(UserEvent::MenuEvent(event));
     }));
+
+    event_loop.run_app(&mut app).unwrap();
 }
 
 
