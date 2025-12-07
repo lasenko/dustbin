@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+auto-launch = "0.5.0"
 image = "0.25.8"
+serde = "1.0.228"
+toml = "0.9.8"
 tray-icon = "0.21.2"
 winit = "0.30.12"

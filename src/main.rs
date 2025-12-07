@@ -1,5 +1,5 @@
 // work in progress
-// TODO: autorun, support of other buttons, maybe support of other OS
+// TODO: autorun, support of other buttons, maybe support of other OS, change icon
 
 
 #![allow(unused)]
@@ -10,6 +10,8 @@ use image;
 use winit::{application::ApplicationHandler, event, event_loop::{self, ActiveEventLoop, ControlFlow, EventLoop, EventLoopBuilder}, platform::windows::EventLoopBuilderExtWindows};
 use winit::event::WindowEvent;
 use winit::window::{Window, WindowId};
+
+mod utility;
 
 #[derive(Default)]
 struct App {
@@ -31,16 +33,16 @@ impl ApplicationHandler<UserEvent> for App {
         println!("{event:?}");
         match event {
             UserEvent::MenuEvent(event) => {
-                if event.id == MenuId::new("1002") {
+                if event.id == MenuId::new("1001") {
                     std::process::exit(0);
-                }else if event.id == MenuId::new("1001") {
+                }else if event.id == MenuId::new("1000") {
                     std::process::Command::new("Explorer.exe")
                         .arg("shell:RecycleBinFolder")
                         .status()
                         .expect("Failed to open Windows Explorer at path");
-                }else if event.id == MenuId::new("1000") {
+                }/*else if event.id == MenuId::new("1000") { // if i do it need to change the id of other menu buttons
                     
-                }
+                }*/
             },
             UserEvent::TrayIconEvent(tray_icon_event) => (),
         }
@@ -49,9 +51,13 @@ impl ApplicationHandler<UserEvent> for App {
 
 fn main() {
 
+    // TODO: made it optional
+    utility::autorun();
+
     unsafe {env::set_var("RUST_BACKTRACE", "1");}
 
-    let path = std::path::Path::new("D:/projects/rust/small-tray-app/src/pixil-frame-0.png");
+    // TODO: fix the absolute path
+    let path = std::path::Path::new("D:/projects/rust/small-tray-app/src/pixil-frame-1.png");
 
     // let icon_size: Option<(u32, u32)> = Some((11, 11));
     // let icon = Icon::from_path(path, icon_size).unwrap(); 
@@ -59,7 +65,8 @@ fn main() {
     let icon = load_icon(&path);
 
     let tray_menu = Menu::with_items(&[
-            &MenuItem::new("reset", true, None),
+            // TODO:
+            //&MenuItem::new("reset", true, None),
             &MenuItem::new("open dustbin", true, None),
 
             // TODO settings altough...
