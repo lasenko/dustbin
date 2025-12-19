@@ -40,6 +40,8 @@ impl ApplicationHandler<UserEvent> for App {
                         .arg("shell:RecycleBinFolder")
                         .status()
                         .expect("Failed to open Windows Explorer at path");
+                }else if event.id == MenuId::new("1002") {
+                    utility::autorun();
                 }/*else if event.id == MenuId::new("1000") { // if i do it need to change the id of other menu buttons
                     
                 }*/
@@ -50,9 +52,6 @@ impl ApplicationHandler<UserEvent> for App {
 }
 
 fn main() {
-
-    // TODO: made it optional
-    utility::autorun();
 
     unsafe {env::set_var("RUST_BACKTRACE", "1");}
 
@@ -71,7 +70,8 @@ fn main() {
 
             // TODO settings altough...
             // &MenuItem::new("settings", true, None),
-            &MenuItem::new("exit", true, None)
+            &MenuItem::new("exit", true, None),
+            &MenuItem::new("enable/disable autorun", true, None)
         ]).expect("Couldn't make the menu");
 
     let tray_icon = TrayIconBuilder::new().with_menu(Box::new(tray_menu)).with_icon(icon).with_tooltip("dustbin").build().unwrap();
