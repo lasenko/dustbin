@@ -55,11 +55,8 @@ fn main() {
 
     unsafe {env::set_var("RUST_BACKTRACE", "1");}
 
-    // TODO: fix the absolute path
-    let path = std::path::Path::new("D:/projects/rust/small-tray-app/src/pixil-frame-1.png");
-
-    // let icon_size: Option<(u32, u32)> = Some((11, 11));
-    // let icon = Icon::from_path(path, icon_size).unwrap(); 
+    let icon_path = format!("{}/src/icons/pixil-frame-1.png", env!("CARGO_MANIFEST_DIR"));
+    let path = std::path::Path::new(&icon_path);
 
     let icon = load_icon(&path);
 
